@@ -1,82 +1,86 @@
-import os
+import sys
+from PTree import *
+
+def isInt(x):
+    try:
+        int(x)
+        return True
+    except:
+        return False
 
 
-def recombine(corpus):
-    # Since PYCCLE and MorphAdorn have different chunking, for each text
-    # associate every character of the original text with its
-    # PYCCLE/MorphAdorner chunk. Then extract each MorphAdorner chunk and
-    # combine any relevant PYCCLE POS tags associated with characters in that
-    # chunk
+def add_lemmas(tree, lemma_chars, lemmas, lemma_association):
+    if tree.name in ['ID','CODE','METADATA']:
+        return tree, lemma_chars, lemma_association
+    if tree.height == 0 and tree.content != '0' and tree.content[0] != '*':
+        text = tree.content
+        match_found = 0
+        cur_text = ''
+        cur_ass = []
+        while match_found != 1:
+            cur_text += lemma_chars.pop(0)
+            cur_ass += [lemma_association.pop(0)]
+            if text == cur_text:
+                ortho = PTree('ORTHO',text)
+                metas = [PTree('STANDARD','+'.join([lemmas[x][3] for x in
+                                                   set(cur_ass)])),
+                         PTree('LEMMA','+'.join([lemmas[x][4] for x in
+                                                set(cur_ass)])),
+                         PTree('NUPOS','+'.join([lemmas[x][2] for x in
+                                                set(cur_ass)]))
+                        ]
+                return PTree(tree.name,[ortho, PTree('META',metas)]), lemma_chars, lemma_association 
+            elif text[:len(cur_text)] != cur_text:
+                cur_text = ''
+                cur_ass = []
+    elif tree.content == '0' or (tree.content[0] == '*' and '-' not in
+                                 tree.content):
+        return PTree('META',[PTree('ALT-ORTHO',tree.content),PTree('LEMMA','0')]), lemma_chars, lemma_association
+    elif tree.content[0] == '*':
+        return PTree('META',[PTree('ALT-ORTHO',tree.content.split('-')[0]),PTree('INDEX',tree.content.split('-')[1])]), lemma_chars, lemma_association
+    else:
+        new_content = []
+        for child in tree.content:
+                new_tree, lemma_chars, lemma_association = add_lemmas(child, lemma_chars, lemmas, lemma_association)
+                new_content.append(new_tree)
+        if '-' in tree.name:
+            if isInt(tree.name.split('-')[1]):
+                new_content.insert(0,PTree('META',[PTree('INDEX',tree.name.split('-')[1])]))
+                new_name = tree.name.split('-')[0]
+            else:
+                new_name = tree.name
+        else:
+            new_name = tree.name
+        return PTree(new_name, new_content), lemma_chars, lemma_association
 
-    # Start by getting a list of original PYCCLE texts and lemmatised output
-    texts = os.listdir('./' + corpus + '-texts')
-    lemmatised_texts = os.listdir('./' + corpus + '-out')
-    completenum = 0  # Track number of texts recombined
-    fullnum = len(texts)  # Count complete number of texts
+if __name__ == '__main__':
+    for f in sys.argv:
+        if f[-3:] in ['ref','psd']:
+            # Load relevant files
+            trees = ParseFiles([f])
+            corpus = f.split('/')[1].split('-')[0].rstrip('0123456789')
+            text = f.split('/')[-1].split('.')[0]
+            lemma_text = open('corpora-out/'+corpus+'/'+text+'.txt')
 
-    # Go through every text
-    for filename in lemmatised_texts:
-        # Print current progress
-        print('{0:.2f}% Complete'.format((float(completenum) /
-                                          float(fullnum)) * 100))
-        completenum += 1
-        # Make sure file exists in both folders
-        if filename in texts:
-            # Load files (including output file)
-            lemma_file = open('./' + corpus + '-out/'+filename)
-            orig_file = open('./' + corpus + '-texts/'+filename)
-            new_file = open('./' + corpus + '-final/'+filename, 'w')
-
-            # Associate every original character with MorphAdorner chunk
+            # Associate original text characters with lemmas
             lemma_chars = ''
+            lemma_association = []
             lemmas = []
-            lemma_states = []
-            for line in lemma_file:
+            for line in lemma_text:
                 s = line.rstrip().split('\t')
                 lemma_chars += s[0]
                 lemmas.append(s)
-                lemma_states += [len(lemmas)-1] * len(s[0])
+                lemma_association += [len(lemmas)-1]*len(s[0])
 
-            # Associate every original character with PYCCLE chunk
-            orig_chars = ''
-            origs = []
-            orig_states = []
-            for line in orig_file:
-                s = line.rstrip().split('\t')
-                orig_chars += s[0]
-                origs.append(s)
-                orig_states += [len(origs)-1] * len(s[0])
+            lemma_chars = list(lemma_chars)
 
-            # Check that no alteration to original text has occurred
-            if lemma_chars != orig_chars:
-                raise ValueError('The two texts are different!!!')
+            new_trees = []
 
-            # Run through text outputting every MorphAdorner chunk
-            cur_origs = []  # List of PYCCLE POS chunks encountered
-            cur_lemma = 0  # Current MorphAdorner lemma
-            cur_word = ''  # Current original text
-            for i in range(len(lemma_chars)):
-                if lemma_states[i] != cur_lemma:
-                    # New MorphAdorner chunk: write out current data and reset
-                    # variables for tracking next chunk
-                    l = lemmas[cur_lemma]
-                    orig_pos = '+'.join([origs[x][1] for x in cur_origs])
-                    output = cur_word + '\t' + l[3] + '\t' + l[4] + '\t' + l[2] + '\t' + orig_pos + '\n'
-                    new_file.write(output)
-                    # Check if new token has been reached, if so add empty line
-                    if l[-1] == '1':
-                        new_file.write('\n')
-                    cur_origs = []
-                    cur_lemma = lemma_states[i]
-                    cur_word = ''
-                if orig_states[i] not in cur_origs:
-                    # New PYCCLE chunk: add chunk to PYCCLE list
-                    cur_origs.append(orig_states[i])
-                # Add current character to current word
-                cur_word += lemma_chars[i]
-    return
+            for key in trees:
+                for tree in trees[key]:
+                    new_tree, lemma_chars, lemma_association = add_lemmas(tree, lemma_chars, lemmas, lemma_association)
+                    new_trees.append(new_tree)
 
-
-if __name__ == "__main__":
-    recombine('eebo')  # Recombine EEBO materials
-    recombine('ecco')  # Recombine ECCO materials
+            outfile = open('corpora-final/'+corpus+'/'+text+'.psd','w')
+            for tree in new_trees:
+                outfile.write(str(tree))

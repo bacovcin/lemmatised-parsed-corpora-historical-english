@@ -10,4 +10,4 @@ java -Xmx8g -Xss1m -cp :bin/:dist/*:lib/* \
 	-s data/standardspellings.txt \
 	-w data/spellingsbywordclass.txt \
 	-o ../corpora-out/PCEEC \
-	../corpora/PCEEC/corpus/txt/*.txt
+	../corpora-in/PCEEC/*.txt

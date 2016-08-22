@@ -9,4 +9,4 @@ java -Xmx8g -Xss1m -cp :bin/:dist/*:lib/* \
 	-s data/standardspellings.txt \
 	-w data/spellingsbywordclass.txt \
 	-o ../corpora-out/PPCEME \
-	../corpora/PPCEME-RELEASE-3/corpus/txt/*/*.txt
+	../corpora-in/PPCEME/*.txt
