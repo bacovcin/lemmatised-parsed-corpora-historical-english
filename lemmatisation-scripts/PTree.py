@@ -4,12 +4,18 @@ class PTree:
             self.name = name
         else:
             print("Name is not a string")
-        self.content = content
         self.height = 0
         if type(content) is list:
+            newcontent = [] 
             for tree in content:
+                if type(tree) is str:
+                    continue
+                newcontent.append(tree)
                 if tree.height >= self.height:
                     self.height = tree.height + 1
+        else:
+            newcontent = content
+        self.content = newcontent
 
     def __str__(self):
         if (type(self.content) is str):
@@ -30,14 +36,15 @@ def MatchParen(x):
     while i < len(x):
         c = x[i]
         if c == '(':
-            if outtext not in [' ', '', '\t']:
+            outtext = ''.join(''.join(outtext.split(' ')).split('\t'))
+            if outtext != '':
                 output.append(outtext)
             outtext = ''
             y = MatchParen(x[i+1:])
             output.append(y[0])
             i = i+y[1]
         elif c == ')':
-            if outtext not in [' ', '']:
+            if outtext not in [' ', '', '\t']:
                 output.append(outtext)
             break
         else:
@@ -73,16 +80,22 @@ def ParseFiles(argvs):
         arg = argvs[i]
         if arg[-3:] in ['ref', 'psd']:
             print(arg)
-            file = open(arg)
+            file = open(arg, encoding="latin-1")
             tokens = []
             token = ''
             for line in file:
-                if line == '\n' and 'ID' in token:
+                if (line == '\n' or 'METADATA' in line) and 'ID' in token:
                     tokens.append(ParseTree(MatchParen(token.lstrip().rstrip())
                                             [0][0]))
-                    token = ''
-                elif line == '\n':
-                    token = ''
+                    if line == '\n':
+                        token = ''
+                    else:
+                        token = line.rstrip().lstrip()
+                elif (line == '\n' or 'METADATA' in line):
+                    if line == '\n':
+                        token = ''
+                    else:
+                        token = line.rstrip().lstrip()
                 else:
                     token = token + line.rstrip().lstrip()
                 toklist[arg[:-4]] = tokens
