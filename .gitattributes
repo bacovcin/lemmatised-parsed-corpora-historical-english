@@ -1,0 +1,4 @@
+diff-files/ filter=lfs diff=lfs merge=lfs -text
+*.patch filter=lfs diff=lfs merge=lfs -text
+diff-files/pceec.patch filter=lfs diff=lfs merge=lfs -text
+diff-files/ycoe.patch filter=lfs diff=lfs merge=lfs -text
