@@ -1,7 +1,8 @@
 # Initial Steps!!!
 This repository uses updated versions of the YCOE and PCEEC corpora that have had
 some errors fixed. In order to update the current corpora distributions from the
-Oxford Text Archives, follow the steps below.
+Oxford Text Archives, follow the steps below. *WARNING: Patching these files
+may take a long time!*
 
 ## YCOE patching steps
 1. Copy the psd folder from inside the YCOE directory to orig-YCOE: cp -r $YCOE-HOME$/psd orig-YCOE/
