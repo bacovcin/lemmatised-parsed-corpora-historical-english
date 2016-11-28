@@ -26,7 +26,7 @@ def add_lemmas(tree, lemma_chars, lemmas, lemma_association):
                       for y in lemmas[x][1].split('-~')] != ['']:
                     metas = [PTree('LEMMA',y)
                                  for x in set(cur_ass)
-                                 for y in lemmas[x][1].split('-~')]
+                                 for y in '-'.join(lemmas[x][1].split(' ')).split('-~')]
                 else:
                     metas = [PTree('LEMMA',text)]
                 return PTree(tree.name,[ortho, PTree('META',metas)]), lemma_chars, lemma_association

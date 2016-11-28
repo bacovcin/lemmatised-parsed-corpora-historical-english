@@ -1,5 +1,7 @@
 import sys
+import progressbar
 from PTree import *
+
 
 def isInt(x):
     try:
@@ -27,13 +29,13 @@ def add_lemmas(tree, lemma_chars, lemmas, lemma_association):
                       for y in lemmas[x][1].split('-~')] != ['']:
                     metasmed = [PTree('MED-LEMMA',y)
                                  for x in set(cur_ass)
-                                 for y in lemmas[x][1].split('-~')]
+                                 for y in ''.join(''.join('-'.join(lemmas[x][1].split(' ')).split('(')).split(')')).split('-~')]
                 metaslem = []
                 if [y for x in set(cur_ass)
                       for y in lemmas[x][2].split('-~')] != ['']:
                     metaslem = [PTree('LEMMA',y.split(' | ')[0])
                              for x in set(cur_ass)
-                             for y in '-~'.join(lemmas[x][2].split(' | ')).split('-~')]
+                             for y in ''.join(''.join('-'.join('-~'.join(lemmas[x][2].split(' | ')).split(' ')).split('(')).split(')')).split('-~')]
                 else:
                     metaslem = [PTree('LEMMA',text)]
                 metas = metasmed + metaslem
@@ -94,9 +96,12 @@ if __name__ == '__main__':
             new_trees = []
 
             for key in trees:
-                for tree in trees[key]:
-                    new_tree, lemma_chars, lemma_association = add_lemmas(tree, lemma_chars, lemmas, lemma_association)
-                    new_trees.append(new_tree)
+                with progressbar.ProgressBar(max_value=len(trees[key])) as bar:
+                    for i in range(len(trees[key])):
+                        tree = trees[key][i]
+                        bar.update(i)
+                        new_tree, lemma_chars, lemma_association = add_lemmas(tree, lemma_chars, lemmas, lemma_association)
+                        new_trees.append(new_tree)
 
             outfile = open('corpora-final/'+corpus+'/'+text+'.psd','w')
             for tree in new_trees:

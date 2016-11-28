@@ -26,8 +26,8 @@ def add_lemmas(tree, lemma_chars, lemmas, lemma_association):
                                                    set(cur_ass)])),
                          PTree('LEMMA','+'.join([lemmas[x][4] for x in
                                                 set(cur_ass)])),
-                         PTree('NUPOS','+'.join([lemmas[x][2] for x in
-                                                set(cur_ass)]))
+                         PTree('NUPOS','+'.join([lemmas[x][2].rstrip(')').lstrip('(') 
+                                                 for x in set(cur_ass)]))
                         ]
                 return PTree(tree.name,[ortho, PTree('META',metas)]), lemma_chars, lemma_association 
             elif text[:len(cur_text)] != cur_text:
