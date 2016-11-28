@@ -31,9 +31,9 @@ def add_lemmas(tree, lemma_chars, lemmas, lemma_association):
                 metaslem = []
                 if [y for x in set(cur_ass)
                       for y in lemmas[x][2].split('-~')] != ['']:
-                    metaslem = [PTree('LEMMA',y)
+                    metaslem = [PTree('LEMMA',y.split(' | ')[0])
                              for x in set(cur_ass)
-                             for y in lemmas[x][2].split('-~')]
+                             for y in '-~'.join(lemmas[x][2].split(' | ')).split('-~')]
                 else:
                     metaslem = [PTree('LEMMA',text)]
                 metas = metasmed + metaslem
