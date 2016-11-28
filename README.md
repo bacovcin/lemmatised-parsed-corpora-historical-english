@@ -1,3 +1,19 @@
+# Initial Steps!!!
+This repository uses updated versions of the YCOE and PCEEC corpora that have had
+some errors fixed. In order to update the current corpora distributions from the
+Oxford Text Archives, follow the steps below.
+
+## YCOE patching steps
+1. Copy the psd folder from inside the YCOE directory to orig-YCOE: cp -r $YCOE-HOME$/psd orig-YCOE/
+2. Apply the patch: patch -p0 < diff-files/ycoe.patch
+3. Move the patched files into your corpora folder: mv orig-YCOE corpora/YCOE
+
+## PCEEC patching steps
+1. Copy the psd-cs2 folder from inside the PCEEC directory to orig-PCEEC: cp -r $PCEC-HOME$/psd-cs2 orig-PCEEC/
+2. Apply the patch: patch -p0 < diff-files/pceec.patch
+3. Run the psd-to-ref script to rename the psd files to ref: bash psd-to-ref.sh
+4. Move the patched files into your corpora folder: mv orig-PCEEC corpora/PCEEC
+
 # Lemmatisation for the Parsed Corpora of Historical English
 For Early Modern and Modern English, the MorphAdorner group has put together a
 lemmatiser that is designed to deal with Modern English spelling and lexical
@@ -14,12 +30,15 @@ lemmatiser is to be overly permissive and include as a lemma anything that could
 possibly have that lemma rather than try to narrow down to the correct lemma for
 a particular form.
 
+For Old English, I relied heavily on "Using the Levenshtein Algorithm for Automatic Lemmatization in Old English" by Bernadette E. Johnson. The list of Old English endings is primarily the list from that text.
+
 # Steps
 1. Make a symbolic link to a folder containing the Parsed Corpora of Historical English (see note below): *ln -s *path-to-corpora* corpora/*
 2. Unzip morphadorner-2.0.1.zip: *unzip morphadorner/morphadorner-2.0.1.zip*
-3. Run make: make
+3. Run make: make -j
 
 N.B. The corpora folder must contain the following directories:
+corpora/YCOE/*.psd
 corpora/PCEEC/*.ref
 corpora/PPCEME/*.psd
 corpora/PPCMBE/*.psd

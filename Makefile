@@ -1,5 +1,6 @@
 pceectargs:= $(addprefix corpora-final/PCEEC/,$(addsuffix .psd,$(basename $(notdir $(wildcard corpora/PCEEC/*.ref)))))
 ppcme2targs:= $(addprefix corpora-final/PPCME/,$(addsuffix .psd,$(basename $(notdir $(wildcard corpora/PPCME2/*.psd)))))
+ycoetargs:= $(addprefix corpora-final/YCOE/,$(addsuffix .psd,$(basename $(notdir $(wildcard corpora/YCOE/*.psd)))))
 ppcemetargs:= $(addprefix corpora-final/PPCEME/,$(notdir $(wildcard corpora/PPCEME/*.psd)))
 ppcmbetargs:= $(addprefix corpora-final/PPCMBE/,$(notdir $(wildcard corpora/PPCMBE/*.psd)))
 pceecins := $(addprefix corpora-in/PCEEC/,$(addsuffix .txt,$(basename $(notdir $(wildcard corpora/PCEEC/*.ref)))))
@@ -23,10 +24,21 @@ corpora-in/PPCMBE/%.txt : corpora/PPCMBE/%.psd lemmatisation-scripts/strip-txt.p
 	@mkdir -p $(@D)
 	python $(word 2,$^) $<
 
+corpora-in/YCOE/%.txt : corpora/YCOE/%.psd lemmatisation-scripts/strip-txt-lemmalist-OE.py
+	@echo --- Striping text from $< ---
+	@mkdir -p $(@D)
+	python $(word 2,$^) $<
+
 corpora-in/PPCME/%.txt : corpora/PPCME2/%.psd lemmatisation-scripts/strip-txt-lemmalist.py
 	@echo --- Striping text from $< ---
 	@mkdir -p $(@D)
 	python $(word 2,$^) $<
+
+corpora-out/YCOE/%.txt : corpora-in/YCOE/%.txt lemmatisation-scripts/lemmalist-lemmatisation-OE.py
+	@echo --- Lemmatising $< ---
+	@mkdir -p $(@D)
+	python $(word 2,$^) $<
+
 
 corpora-out/PPCME/%.txt : corpora-in/PPCME/%.txt lemmatisation-scripts/lemmalist-lemmatisation-MED.py
 	@echo --- Lemmatising $< ---
@@ -96,23 +108,31 @@ dummy-PPCMBE.txt : $(ppcmbeins) lemmatisation-scripts/eccoplaintext.properties m
 .INTERMEDIATE : $(pceecins) $(pceecouts) dummy-PCEEC.txt $(ppcemeins) $(ppcemeouts) dummy-PPCEME.txt $(ppcmbeins) $(ppcmbeouts) dummy-PPCMBE.txt 
 
 $(pceectargs) : corpora-final/PCEEC/%.psd : lemmatisation-scripts/recombine.py corpora-out/PCEEC/%.txt 
-	@echo --- Recombining PCEEC ---
+	@echo --- Recombining $@ ---
 	@mkdir -p $(@D)
 	python $< $(addprefix corpora/PCEEC/,$(addsuffix .ref,$(basename $(notdir $@))))
 
 $(ppcmbetargs) : corpora-final/PPCMBE/%.psd : lemmatisation-scripts/recombine.py corpora-out/PPCMBE/%.txt
-	@echo --- Recombining PPCMBE ---
+	@echo --- Recombining $@ ---
 	@mkdir -p $(@D)
 	python $< $(addprefix corpora/PPCMBE/,$(notdir $@))
 
 $(ppcemetargs) : corpora-final/PPCEME/%.psd : lemmatisation-scripts/recombine.py corpora-out/PPCEME/%.txt 
-	@echo --- Recombining PPCEME ---
+	@echo --- Recombining $@ ---
 	@mkdir -p $(@D)
 	python $< $(addprefix corpora/PPCEME/,$(notdir $@))
 
 $(ppcme2targs) : corpora-final/PPCME/%.psd : lemmatisation-scripts/recombine-lemmalist.py corpora-out/PPCME/%.txt
-	@echo --- Recombining PPCME2 ---
+	@echo --- Recombining $@ ---
 	@mkdir -p $(@D)
 	python $< $(addprefix corpora/PPCME2/,$(notdir $@))
 
-all : $(pceectargs) $(ppcemetargs) $(ppcmbetargs) $(ppcme2targs)
+$(ycoetargs) : corpora-final/YCOE/%.psd : lemmatisation-scripts/recombine-lemmalist-OE.py corpora-out/YCOE/%.txt
+	@echo --- Recombining $@ ---
+	@mkdir -p $(@D)
+	python $< $(addprefix corpora/YCOE/,$(notdir $@))
+
+all : $(pceectargs) $(ppcemetargs) $(ppcmbetargs) $(ppcme2targs) $(ycoetargs)
+
+output :
+	echo $(ycoetargs)

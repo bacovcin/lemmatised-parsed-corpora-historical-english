@@ -29,6 +29,14 @@ pos_equiv = {'ADJ':'adj',
              'INTJ':'interj',
              'MD':'v',
              'MD0':'v',
+             'MD^D':'v',
+             'MDD':'v',
+             'MDDI':'v',
+             'MDDS':'v',
+             'MDI':'v',
+             'MDP':'v',
+             'MDPI':'v',
+             'MDPS':'v',
              'N':'n',
              'N^N':'n',
              'N^A':'n',
@@ -81,7 +89,8 @@ pos_equiv = {'ADJ':'adj',
              'VBP':'v',
              'VBPH':'v',
              'VBPI':'v',
-             'VBPS':'v'}
+             'VBPS':'v',
+        }
 
 def get_text(tree):
     if tree.height == 0 and tree.content != '0' and tree.content[0] != '*' and tree.name not in ['ID','CODE','METADATA']:
@@ -103,7 +112,7 @@ if __name__ == '__main__':
             # Load relevant files
             trees = ParseFiles([f])
             corpus = f.split('/')[1].split('-')[0].rstrip('0123456789')
-            text = f.split('/')[-1].split('.')[0]
+            text = '.'.join(f.split('/')[-1].split('.')[:-1])
             new_trees = []
 
             for key in trees:

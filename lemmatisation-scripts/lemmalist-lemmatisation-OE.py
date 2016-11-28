@@ -1,11 +1,12 @@
 import progressbar
-from copy import copy, deepcopy
 import sys
+from copy import copy, deepcopy
 from collections import Counter
 
 equivsets = {'+a':['+a','a','e','i','o','u','y'],
               'a':['+a','a','e','i','o','u','y'],
               'e':['+a','a','e','i','o','u','y'],
+              '+e':['+a','a','e','i','o','u','y'],
               'i':['+a','a','e','i','o','u','y','+g','g'],
               'o':['+a','a','e','i','o','u','y'],
               'u':['+a','a','e','i','o','u','y','v'],
@@ -38,16 +39,9 @@ equivsets = {'+a':['+a','a','e','i','o','u','y'],
               '&':['&'],
               ' ':[' '],
               '-':['-'],
-              '=':['=']
+              '=':['='],
+              '$':['$']
 }
-
-def strip_endings(x,endings):
-    for ending in endings:
-        if len(ending) < len(x):
-            if x[-len(ending):] == ending:
-                if len(x[:-len(ending)]) > 2:
-                    return(x[:-len(ending)])
-    return(x)
 
 def extract_phones(x):
     outputs = []
@@ -71,18 +65,14 @@ def extract_phones(x):
     return outputs
 
 def levsearch(x,curdict,currow,curbest):
-    medlemmas = []
-    oedlemmas = []
+    bestlemmas = [curbest,[]]
     for key in curdict.keys():
         if key == '#':
             curval = currow[-1]
-            if curval < curbest:
-                medlemmas = curdict['#'][0]
-                oedlemmas = curdict['#'][1]
-                curbest = curval
-            elif curval == curbest:
-                medlemmas += curdict['#'][0]
-                oedlemmas += curdict['#'][1]
+            if curval < bestlemmas[0]:
+                bestlemmas = [curval,[curdict['#']]]
+            elif curval == bestlemmas[0]:
+                bestlemmas[1].append(curdict['#'])
         else:
             newrow = [currow[0]+1]
             for i in range(1,len(currow)):
@@ -97,25 +87,29 @@ def levsearch(x,curdict,currow,curbest):
                 except KeyError:
                     substitution += 1
                 newrow.append(min(deletion,insertion,substitution))
-            if True in [y <= curbest for y in newrow]:
-                keybest, keymed, keyoed = levsearch(x,curdict[key],
-                                                    newrow,curbest)
-                if keybest < curbest:
-                    medlemmas = keymed
-                    oedlemmas = keyoed
-                    curbest = keybest
-                elif keybest == curbest:
-                    medlemmas += keymed
-                    oedlemmas += keyoed
-    return curbest, medlemmas, oedlemmas
+            if True in [y <= bestlemmas[0] for y in newrow]:
+                keybests = levsearch(x,curdict[key],newrow,bestlemmas[0])
+                if keybests[0] < bestlemmas[0]:
+                    bestlemmas = keybests
+                elif keybests[0] == bestlemmas[0]:
+                    bestlemmas[1] += keybests[1]
+    return bestlemmas
+
+infile = open('lemma-lists/OE-endings.txt')
+endings = sorted(infile.readline().rstrip().split(','),key=lambda x:-len(x))
+endings = [extract_phones(x) for x in endings]
+
+def strip_endings(x,endings):
+    for ending in endings:
+        if len(ending) < len(x):
+            if x[-len(ending):] == ending:
+                if len(x[:-len(ending)]) > 2:
+                    return(x[:-len(ending)])
+    return(x)
 
 def build_lemmas(x,lemma,curdict):
     if len(x) == 0:
-        try:
-            curdict['#'][0].append(lemma[0])
-            curdict['#'][1].append(lemma[1])
-        except KeyError:
-            curdict['#'] = [[lemma[0]],[lemma[1]]]
+        curdict['#'] = lemma
     else:
         try:
             curdict[x[0]] = build_lemmas(x[1:],lemma,curdict[x[0]])
@@ -123,32 +117,38 @@ def build_lemmas(x,lemma,curdict):
             curdict[x[0]] = build_lemmas(x[1:],lemma,{})
     return curdict
 
-infile = open('lemma-lists/MED-endings.txt')
-endings = sorted(infile.readline().rstrip().split(','),key=lambda x:-len(x))
-endings = [extract_phones(x) for x in endings]
-
 lemmas = {}
-infile = open('lemma-lists/MED_lemmas.csv')
+infile = open('lemma-lists/OE_lemmas.txt')
 lines = infile.readlines()
 infile.close()
-names = lines[0].rstrip().split(',')
 for line in lines[1:]:
-    s = line.rstrip().split(',')
-    try:
-        # Don't try suffixes
-        if s[2] not in ['adj','adv','conj','interj','v','n','p']:
-            continue
-        if s[3] == '':
-            s[3] = s[1]
+    s = line.rstrip().split('\t')
+    poses = []
+    if 'Verb' in s[2]:
+        poses.append('v')
+    if 'Noun' in s[2]:
+        poses.append('n')
+    if 'Adjective' in s[2]:
+        poses.append('adj')
+    if 'Adverb' in s[2]:
+        poses.append('adv')
+    if 'Conjunction' in s[2]:
+        poses.append('conj')
+    if 'Interjection' in s[2]:
+        poses.append('interj')
+    if 'Preposition' in s[2]:
+        poses.append('p')
+    if poses == []:
+        continue
+    for pos in poses:
         try:
-            pos_dict = lemmas[s[2]]
+            pos_dict = lemmas[pos]
         except KeyError:
             pos_dict = {}
-        newform = strip_endings(extract_phones(s[0].lower()),endings)
-        pos_dict = build_lemmas(newform,(s[1],s[3]),pos_dict)
-        lemmas[s[2]] = pos_dict
-    except IndexError:
-        continue
+        for form in s[3].split(';'):
+            newform = strip_endings(extract_phones(form.lower()),endings)
+            pos_dict = build_lemmas(newform,s[1],pos_dict)
+        lemmas[pos] = pos_dict
 
 for arg in sys.argv:
     if arg[-3:] == 'txt':
@@ -163,29 +163,22 @@ for arg in sys.argv:
                 bar.update(i)
                 pos, word = line.rstrip().split('~#')
                 if pos == '':
-                    outfile.write(word+'\t\t\n')
+                    outfile.write(word+'\t\n')
                     continue
                 mylemmas = lemmas[pos]
                 newword = copy(word)
-                newform = strip_endings(extract_phones(newword.lower()),
-                                        endings)
+                newform = strip_endings(extract_phones(newword.lower()),endings)
                 currow = [0]*(len(newform)+1)
                 for i in range(len(newform)+1):
                     currow[i] = i
-                medlemma = []
-                oedlemma = []
-                i = 0
-                while medlemma == []:
-                    score, medlemma, oedlemma = levsearch(newform,
-                                                          mylemmas,
-                                                          currow,
-                                                          i)
+                lemma = []
+                i = 1
+                while lemma == []:
+                    score, lemma = levsearch(newform,mylemmas,currow,i)
                     i += 1
-                    if i > max(min((len(newword)-2),3),1):
+                    if i >= min(len(newform),5):
                         break
-                if medlemma == []:
-                    outfile.write(word+'\t\t\n')
+                if lemma == []:
+                    outfile.write(word+'\t\n')
                 else:
-                    outfile.write(word+'\t'+
-                                  '-~'.join(set(medlemma))+'\t'+
-                                  '-~'.join(set(oedlemma))+'\n')
+                    outfile.write(word+'\t'+'-~'.join(lemma)+'\n')
