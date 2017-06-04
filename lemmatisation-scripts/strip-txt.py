@@ -28,5 +28,27 @@ if __name__ == '__main__':
 
             outfile = open('corpora-in/'+corpus+'/'+text+'.txt','w')
             for tree in new_trees:
-                for word in tree:
-                    outfile.write(word+'\n')
+                i = 0
+                while i < len(tree):
+                    word = tree[i]
+                    if len(word) > 1:
+                        if '_' in word:
+                            for x in word.split('_'):
+                                outfile.write(x+'\n')
+                        elif word[-1] == '@':
+                            j = 1
+                            newword = word[:-1]
+                            while True:
+                                if tree[i+j][-1] == '@':
+                                    newword += tree[i+j][1:-1]
+                                    j += 1
+                                else:
+                                    newword += tree[i+j][1:]
+                                    i += j
+                                    break
+                            outfile.write(newword+'\n')
+                        else:
+                            outfile.write(word+'\n')
+                    else:
+                        outfile.write(word+'\n')
+                    i += 1

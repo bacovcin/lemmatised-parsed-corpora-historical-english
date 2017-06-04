@@ -79,12 +79,14 @@ def ParseFiles(argvs):
     for i in range(len(argvs)):
         arg = argvs[i]
         if arg[-3:] in ['ref', 'psd']:
-            print(arg)
+            #print(arg)
             file = open(arg, encoding="latin-1")
             tokens = []
             token = ''
             for line in file:
-                if (line == '\n' or 'METADATA' in line) and 'ID' in token:
+                if (line == '\n' or 
+                    'METADATA' in line or
+                   line == '(\n') and ('ID' in token or 'CODE' in token):
                     tokens.append(ParseTree(MatchParen(token.lstrip().rstrip())
                                             [0][0]))
                     if line == '\n':
@@ -99,4 +101,6 @@ def ParseFiles(argvs):
                 else:
                     token = token + line.rstrip().lstrip()
                 toklist[arg[:-4]] = tokens
+            if ('ID' in token or 'CODE' in token):
+                tokens.append(ParseTree(MatchParen(token.lstrip().rstrip())[0][0]))
     return toklist
