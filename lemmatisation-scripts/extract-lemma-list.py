@@ -141,7 +141,7 @@ def extract_lemmas(tree):
         pos = tree.name.split('_')[0].split('-')[0]
         for x in tree.content:
             if x.name == 'ORTHO':
-                ortho = x.content
+                ortho = x.content.lower()
             elif x.name == 'META':
                 for y in x.content:
                     if y.name == 'LEMMA':
