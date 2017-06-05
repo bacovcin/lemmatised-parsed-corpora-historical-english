@@ -1,0 +1,35 @@
+Accompt vs account
+Use OED to determine dashed words (e.g., after-*)
+Use British spelling for lemmas (since British English corpora, esp. -ise spelling)
+Grandpapa -> grandfather?
+Spelled out words: he-te-ro-dox
+heading? from head
+heartburning?
+What to do with personal names marked as nouns (e.g., Helen)?
+laird -> lord?
+middy -> midshipman?
+milch/milk?
+check all -ing nouns
+o'clock?
+padre -> father?
+pater -> father?
+proceeds -> proceed?
+southward -> south+ward
+species -> specie
+thirties -> 30?
+account/accompt
+what to do with LS pos?
+what to do with $ pos?
+what to do with X+X pos?
+afore/beforementioned?
+fare-thee-well?
+hullo/hollo > hello?
+aforementioned?
+ADJ tagged past participles (e.g., armed, barefooted)
+authentically -> authentic
+bodily -> body?
+spelling errors (flag to make sure they occur in original, e.g., dissatify?)
+enlighted -> enlighten
+Remove -ly for ADV (current MorphAdorner practice); What about earthly? Or easterly?
+mahamotan vs mahammodean
+tenfold?
